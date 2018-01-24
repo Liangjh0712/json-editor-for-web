@@ -8,50 +8,65 @@ class EditJson {
         this.htmlCodeStr = '';
         this.render(styleJSON);
         this._event();
+        // this.getData = this.getData.bind(this);
     }
     render(json) {
         this._getHtmlCodeByJson(json);
         this.node.innerHTML = this.htmlCodeStr;
     }
 
-    _getHtmlCodeByJson(json, key) {
+    getData() {
+        let temp = this.node.textContent;
+        // temp = temp.replace(/\<[^\>]*\>/gm, '');
+        // temp = JSON.stringify(temp);
+        // temp = temp.replace(/(\\n)|\ {2}/gm, '');
+        // temp = temp.replace(/\\+/gm, '\\');
+        console.log(JSON.parse(temp), temp);
+        // return temp;
+    }
+
+    _getHtmlCodeByJson(json, key, comma) {
         let typeStr = Object.prototype.toString.call(json);
         switch (typeStr) {
             case '[object Object]':
             {
                 this.htmlCodeStr += `<div class="jsonView"><div class="expend"></div>`;
-                this.htmlCodeStr += key ? `<div class="name object-type">${key}</div><div class="separator">:</div>` : ``;
+                this.htmlCodeStr += key ? `<div class="name object-type">"${key}"</div><div class="separator">:</div>` : ``;
                 this.htmlCodeStr += `<div class="bracket">{</div><div class="delete"></div>
                   <div class="children">`;
+                let length = Object.keys(json).length;
                 for (let key in json) {
-                    this._getHtmlCodeByJson(json[key], key);
+                    let flag = --length > 0 ? ',' : '';
+                    this._getHtmlCodeByJson(json[key], key, flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="insert"></div><div class="bracket">}</div></div>`;
+                  <div class="bracket">}</div><div class="comma">${comma || ''}</div><div class="insert"></div></div>`;
                 break;
             }
             case '[object Array]':
             {
                 this.htmlCodeStr += `<div class="jsonView"><div class="expend"></div>`;
-                this.htmlCodeStr += key ? `<div class="name array-type">${key}</div><div class="separator">:</div>` : ``;
+                this.htmlCodeStr += key ? `<div class="name array-type">"${key}"</div><div class="separator">:</div>` : ``;
                 this.htmlCodeStr += `<div class="bracket">[</div><div class="delete"></div>
                   <div class="children">`;
+                let length = json.length;
                 for (let value of json) {
-                    this._getHtmlCodeByJson(value, '');
+                    let flag = --length > 0 ? ',' : '';
+                    this._getHtmlCodeByJson(value, '', flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="insert"></div><div class="bracket">]</div></div>`;
+                  <div class="bracket">]</div><div class="comma">${comma || ''}</div><div class="insert"></div></div>`;
                 break;
             }
             default:
             {
                 let temp = this._judgeFootColor(key, json);
-
                 this.htmlCodeStr += `<div class="jsonView">`;
-                this.htmlCodeStr += key ? `<div class="name ${temp[0] || ''}">${key}</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="value ${temp[1] || ''}">${json}</div>
+                this.htmlCodeStr += key ? `<div class="name ${temp[0] || ''}">"${key}"</div><div class="separator">:</div>` : ``;
+                this.htmlCodeStr += `<div class="value ${temp[1] || ''}">"${json}"</div>
                                     <div class="delete"></div>
                                     <div class="children"></div>
+                                    <div class="comma">${comma || ''}</div>
                                     <div class="insert"></div>
                                     </div>`;
             }
@@ -110,21 +125,14 @@ class EditJson {
 
         //  hover background
         // this.node.addEventListener('mouseover', e => {
-        //     if (e.target.className.includes('jsonView')) {
-        //         e.target.className += ' active-background';
-        //     } else {
-        //         e.target.parentNode.className += ' active-background';
-        //     }
+        //     e.target.className += ' active-background';
         // });
         // this.node.addEventListener('mouseout', e => {
-        //     if (e.target.className.includes('jsonView')) {
-        //         e.target.className = e.target.className.replace(/\ active\-background/gm, '');
-        //     } else {
-        //         e.target.parentNode.className = e.target.parentNode.className.replace(/\ active\-background/gm, '');
-        //     }
+        //     e.target.className = e.target.className.replace(/\ active\-background/gm, '');
         // });
     }
 }
 
 
-new EditJson('#editor');
+const editor = new EditJson('#editor');
+document.getElementById('test').onclick = e => editor.getData();

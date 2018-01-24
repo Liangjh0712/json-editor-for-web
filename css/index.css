@@ -16,15 +16,24 @@
 .jsonView>.separator,
 .jsonView>.delete,
 .jsonView>.insert,
+.jsonView>.comma,
 .jsonView>.children,
 .jsonView>.value {
   display: inline-block;
+}
+
+.jsonView>.bracket {
+  width: 2em;
 }
 
 .jsonView {
   padding-left: 1em;
   width: 1000%;
   position: relative;
+}
+
+.jsonView>.comma {
+  /* float: right; */
 }
 
 
@@ -59,7 +68,7 @@
   color: aqua;
 }
 
-.jsonView>.color-typ {
+.jsonView>.color-type {
   color: rgb(78, 177, 75);
 }
 
@@ -92,4 +101,16 @@
 
 .active-background {
   background-color: aqua;
+}
+
+
+/* font-size */
+
+.jsonView>.comma {
+  font-size: 1.5em;
+}
+
+.collapse:before,
+.expend:before {
+  font-size: 0.8em;
 }
