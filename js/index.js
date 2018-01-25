@@ -36,9 +36,9 @@ class EditJson {
         switch (typeStr) {
             case '[object Object]':
             {
-                this.htmlCodeStr += `<div class="jsonView"><div class="expend"></div>`;
+                this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
                 this.htmlCodeStr += key ? `<div class="name object-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="bracket">{</div><div class="delete"></div>
+                this.htmlCodeStr += `<div class="bracket">{</div>
                   <div class="children">`;
                 let length = Object.keys(json).length;
                 for (let key in json) {
@@ -46,14 +46,14 @@ class EditJson {
                     this._getHtmlCodeByJson(json[key], key, flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="bracket">}</div><div class="comma">${comma || ''}</div><div class="insert"></div></div>`;
+                  <div class="bracket">}<div class="comma">${comma || ''}</div><div class="insert"></div><div class="delete"></div></div></div>`;
                 break;
             }
             case '[object Array]':
             {
-                this.htmlCodeStr += `<div class="jsonView"><div class="expend"></div>`;
+                this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
                 this.htmlCodeStr += key ? `<div class="name array-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="bracket">[</div><div class="delete"></div>
+                this.htmlCodeStr += `<div class="bracket">[</div>
                   <div class="children">`;
                 let length = json.length;
                 for (let value of json) {
@@ -61,7 +61,7 @@ class EditJson {
                     this._getHtmlCodeByJson(value, '', flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="bracket">]</div><div class="comma">${comma || ''}</div><div class="insert"></div></div>`;
+                  <div class="bracket">]<div class="comma">${comma || ''}</div><div class="insert"></div><div class="delete"></div></div></div>`;
                 break;
             }
             default:
@@ -70,7 +70,6 @@ class EditJson {
                 this.htmlCodeStr += `<div class="jsonView">`;
                 this.htmlCodeStr += key ? `<div class="name ${temp[0] || ''}">"${key}"</div><div class="separator">:</div>` : ``;
                 this.htmlCodeStr += `<div class="value ${temp[1] || ''}">"${json}"</div>
-                                    <div class="delete"></div>
                                     <div class="children"></div>
                                     <div class="comma">${comma || ''}</div>`;
                 this.htmlCodeStr += temp[0] === 'color-type' ? `<div contentEditable="false" class="input-group colorpicker-component" title="Using  option">
@@ -80,6 +79,7 @@ class EditJson {
                                         </span>
                                     </div>` : '';
                 this.htmlCodeStr += `<div class="insert"></div>
+                                    <div class="delete"></div>
                                     </div>`;
             }
         }
@@ -91,22 +91,22 @@ class EditJson {
             case '[object String]':
             {
                 if (value.match(/^(\#)|^(rgb)/)) {
-                    return ['color-type', 'color-value'];
+                    return ['color-type', 'color-val'];
                 } else {
                     return '';
                 }
             }
             case '[object Boolean]':
             {
-                return ['bool-type', 'bool-value'];
+                return ['bool-type', 'bool-val'];
             }
             case '[object Number]':
             {
-                return ['number-type', 'number-value'];
+                return ['number-type', 'number-val'];
             }
             case '[object Date]':
             {
-                return ['date-type', 'data-value'];
+                return ['date-type', 'data-val'];
             }
             default:
             {
@@ -115,20 +115,26 @@ class EditJson {
         }
     }
 
+    _partialRender(node) {
+        let text = node.textContent;
+        console.log(text);
+        // let obj = JSON.parse(text);
+    }
+
     _event() {
         // expend collapse
         this.node.addEventListener('mousedown', e => {
             const clickNode = e.target;
             switch (clickNode.className) {
-                case 'collapse':
+                case 'collapseObj':
                 {
-                    clickNode.className = 'expend';
+                    clickNode.className = 'expendObj';
                     clickNode.parentNode.querySelector('.children').style.display = 'inline-block';
                     break;
                 }
-                case 'expend':
+                case 'expendObj':
                 {
-                    clickNode.className = 'collapse';
+                    clickNode.className = 'collapseObj';
                     clickNode.parentNode.querySelector('.children').style.display = 'none';
                     break;
                 }
@@ -151,15 +157,46 @@ class EditJson {
         //         // e.target.parentNode.parentNode.querySelector('.value').innerText = e.target.value;
         //     });
         // }
-
-        // this.node.querySelectorAll('.colorpicker-value').forEach(node => {
-        //     $(node).on('change', e => {
-        //         console.log(e.target);
-        //     });
-        // });
-
         $('.colorpicker-value').on('change', e => {
             e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
+        });
+        this.node.addEventListener('click', e => {
+            if (e.target.className.match(/(value)|(name)/)) {
+                this.node.querySelectorAll('.value').forEach(node => {
+                    node.contentEditable = false;
+                });
+                this.node.querySelectorAll('.name').forEach(node => {
+                    node.contentEditable = false;
+                });
+                e.target.contentEditable = true;
+                e.target.focus();
+            } else {
+                let flag = true;
+                this.node.querySelectorAll('.value').forEach(node => {
+                    if (node.contentEditable === 'true') {
+                        node.contentEditable = false;
+                        flag = false;
+                    }
+                });
+                this.node.querySelectorAll('.name').forEach(node => {
+                    if (node.contentEditable === 'true') {
+                        node.contentEditable = false;
+                        flag = false;
+                    }
+                });
+                if (!flag) {
+                    // this.getData(); // refresh data
+                    // e.target.addEventListener('DOMCharacterDataModified', evt => {
+                    e.target.innerHTML = e.target.textContent;
+                    let parentNode = e.target.parentNode;
+                    while (!parentNode.className.includes('children')) {
+                        parentNode = parentNode.parentNode;
+                    }
+                    console.log(e.target, e.target.parentNode, parentNode);
+                    this._partialRender(parentNode);
+                    // });
+                }
+            }
         });
     }
 }
@@ -167,4 +204,3 @@ class EditJson {
 
 const editor = new EditJson('#editor');
 document.getElementById('test').onclick = e => editor.getData();
-$('.colorpicker1').colorpicker();

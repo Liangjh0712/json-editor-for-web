@@ -1,11 +1,19 @@
-/* collapse style */
+/* collapseObj style */
 
-.collapse:before {
+.jsonView .collapseObj:before {
   content: '\25BC';
 }
 
-.expend:before {
+.jsonView .expendObj:before {
   content: '\25B6';
+}
+
+.jsonView .insert:before {
+  content: '\ \+';
+}
+
+.jsonView .delete:before {
+  content: '\ \-';
 }
 
 
@@ -14,9 +22,9 @@
 .jsonView>.expand,
 .jsonView>.name,
 .jsonView>.separator,
-.jsonView>.delete,
-.jsonView>.insert,
-.jsonView>.comma,
+.jsonView .delete,
+.jsonView .insert,
+.jsonView .comma,
 .jsonView>.children,
 .jsonView>.colorpicker-component,
 .jsonView>.value {
@@ -24,7 +32,8 @@
 }
 
 .jsonView>.bracket {
-  width: 2em;
+  /* width: 2em; */
+  height: 2em;
 }
 
 .jsonView {
@@ -33,15 +42,21 @@
   position: relative;
 }
 
+
+.jsonView .delete,
+.jsonView .insert {
+  padding-left: 0.5em;
+}
+
 .jsonView>.comma {
   /* float: right; */
 }
 
 
-/* collapse */
+/* collapseObj */
 
-.jsonView>.collapse,
-.jsonView>.expend {
+.jsonView .collapseObj,
+.jsonView .expendObj {
   position: absolute;
   left: 0;
 }
@@ -77,7 +92,7 @@
   color: rgb(166, 96, 199);
 }
 
-.jsonView>.bool-value {
+.jsonView>.bool-val {
   color: rgb(170, 68, 68);
 }
 
@@ -85,7 +100,7 @@
   color: rgb(238, 147, 29);
 }
 
-.jsonView>.number-value {
+.jsonView>.number-val {
   color: rgb(233, 27, 27);
 }
 
@@ -93,26 +108,42 @@
   color: rgb(7, 119, 63);
 }
 
-.jsonView>.date-value {
+.jsonView>.date-val {
   color: rgb(27, 114, 228);
 }
 
 
 /* active background */
 
-.active-background {
+.jsonView .active-background {
   background-color: aqua;
+}
+
+
+/* insert delete color */
+
+.jsonView .delete:before {
+  color: red;
+}
+
+.jsonView .insert:before {
+  color: chocolate;
 }
 
 
 /* font-size */
 
-.jsonView>.comma {
+.jsonView .comma {
   font-size: 1.5em;
 }
 
-.collapse:before,
-.expend:before {
+.jsonView .insert:before,
+.jsonView .delete:before {
+  font-size: 1.5em;
+}
+
+.jsonView .collapseObj:before,
+.jsonView .expendObj:before {
   font-size: 0.8em;
 }
 
