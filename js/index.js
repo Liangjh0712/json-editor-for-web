@@ -5,9 +5,11 @@ class EditJson {
         } catch (e) {
             console.log(e);
         }
+        this._collapseExpendHandle = this._collapseExpendHandle.bind(this);
+        this._colorValueChangeHandle = this._colorValueChangeHandle.bind(this);
+        this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
         this.htmlCodeStr = '';
         this.render(styleJSON);
-        this._event();
     }
     render(json) {
         // delete useless  colorpicker node
@@ -38,7 +40,7 @@ class EditJson {
             {
                 this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
                 this.htmlCodeStr += key ? `<div class="name object-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="bracket">{</div>
+                this.htmlCodeStr += `<div class="leftBracket">{</div>
                   <div class="children">`;
                 let length = Object.keys(json).length;
                 for (let key in json) {
@@ -46,14 +48,14 @@ class EditJson {
                     this._getHtmlCodeByJson(json[key], key, flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="bracket">}<div class="comma">${comma || ''}</div><div class="insert"></div><div class="delete"></div></div></div>`;
+                  <div class="rightBracket"><span>}</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert"></div></div></div>`;
                 break;
             }
             case '[object Array]':
             {
                 this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
                 this.htmlCodeStr += key ? `<div class="name array-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="bracket">[</div>
+                this.htmlCodeStr += `<div class="leftBracket">[</div>
                   <div class="children">`;
                 let length = json.length;
                 for (let value of json) {
@@ -61,7 +63,7 @@ class EditJson {
                     this._getHtmlCodeByJson(value, '', flag);
                 }
                 this.htmlCodeStr += `</div>
-                  <div class="bracket">]<div class="comma">${comma || ''}</div><div class="insert"></div><div class="delete"></div></div></div>`;
+                  <div class="rightBracket"><span>]</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert"></div></div></div>`;
                 break;
             }
             default:
@@ -78,8 +80,7 @@ class EditJson {
                                         <i style="border: solid 1px #2d3c4d"></i>
                                         </span>
                                     </div>` : '';
-                this.htmlCodeStr += `<div class="insert"></div>
-                                    <div class="delete"></div>
+                this.htmlCodeStr += `<div class="delete"></div><div class="insert" contentEditable="true"></div>
                                     </div>`;
             }
         }
@@ -116,30 +117,35 @@ class EditJson {
     }
 
     _partialRender(node) {
-        let text = node.textContent;
-        console.log(text);
+        // let name = node.querySelector('.name').textContent;
+        // let comma = node.querySelector('.rightBracket>.comma').textContent;
+        let text = node.querySelector('.leftBracket').textContent + node.querySelector('.children').textContent + node.querySelector('.rightBracket>span').textContent;
+        text = text.replace(/\'(\")\'/gm, '\\\"');
+        text = text.replace(/\\/gm, '\\\\');
+        let json = JSON.parse(text);
+        this.htmlCodeStr = '';
+        let size = Object.keys(json).length;
+        for (let key in json) {
+            if (size-- > 1) {
+                this._getHtmlCodeByJson(json[key], key, ',');
+            } else {
+                this._getHtmlCodeByJson(json[key], key, '');
+            }
+        }
+        // this._getHtmlCodeByJson(json, key, comma);
+        // delete useless  colorpicker node
+        document.querySelectorAll('.colorpicker').forEach(node => {
+            document.body.removeChild(node);
+        });
+        node.querySelector('.children').innerHTML = this.htmlCodeStr;
+        $('.colorpicker-component').colorpicker();
+        this._renderEvent();
+        // console.log(Object.keys(json).length, this.htmlCodeStr);
         // let obj = JSON.parse(text);
     }
 
     _event() {
-        // expend collapse
-        this.node.addEventListener('mousedown', e => {
-            const clickNode = e.target;
-            switch (clickNode.className) {
-                case 'collapseObj':
-                {
-                    clickNode.className = 'expendObj';
-                    clickNode.parentNode.querySelector('.children').style.display = 'inline-block';
-                    break;
-                }
-                case 'expendObj':
-                {
-                    clickNode.className = 'collapseObj';
-                    clickNode.parentNode.querySelector('.children').style.display = 'none';
-                    break;
-                }
-            }
-        });
+
         //  hover background
         // this.node.addEventListener('mouseover', e => {
         //     e.target.className += ' active-background';
@@ -148,8 +154,77 @@ class EditJson {
         //     e.target.className = e.target.className.replace(/\ active\-background/gm, '');
         // });
     }
+    _collapseExpendHandle(e) {
+        const clickNode = e.target;
+        switch (clickNode.className) {
+            case 'collapseObj':
+            {
+                clickNode.className = 'expendObj';
+                clickNode.parentNode.querySelector('.children').style.display = 'inline-block';
+                break;
+            }
+            case 'expendObj':
+            {
+                clickNode.className = 'collapseObj';
+                clickNode.parentNode.querySelector('.children').style.display = 'none';
+                break;
+            }
+        }
+    }
+
+    _colorValueChangeHandle(e) {
+        e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
+    }
+
+    _editorValueChangeHandle(e) {
+        let tempNode = '';
+        this.node.querySelectorAll('.value').forEach(node => {
+            if (node.contentEditable === 'true') {
+                node.innerHTML = node.textContent;
+                node.contentEditable = false;
+                tempNode = node;
+            }
+        });
+        this.node.querySelectorAll('.name').forEach(node => {
+            if (node.contentEditable === 'true') {
+                node.innerHTML = node.textContent;
+                node.contentEditable = false;
+                tempNode = node;
+            }
+        });
+        if (e.target.className.match(/(value)|(name)/)) {
+            e.target.contentEditable = true;
+            if (e.target !== tempNode) {
+                e.target.focus();
+            }
+        }
+        if (tempNode && e.target !== tempNode) {
+            let parentNode = tempNode.parentNode.parentNode;
+            while (!parentNode.className.includes('jsonView')) {
+                parentNode = parentNode.parentNode;
+            }
+            this._partialRender(parentNode);
+        }
+        // this.getData(); // refresh data
+        // e.target.addEventListener('DOMCharacterDataModified', evt => {  //&& e.target.className.match(/(value)|(name)/m)
+        // let parentNode = e.target.parentNode;
+        // while (!parentNode.className.includes('children')) {
+        //     parentNode = parentNode.parentNode;
+        // }
+        // this._partialRender(parentNode.parentNode);
+        // });
+    }
+
     _renderEvent() {
-        // color event
+        // deldete event listener
+        this.node.removeEventListener('mousedown', this._collapseExpendHandle);
+        $('.colorpicker-value').unbind('change', this._colorValueChangeHandle);
+        this.node.removeEventListener('mousedown', this._editorValueChangeHandle);
+
+        // expend collapse
+        this.node.addEventListener('mousedown', this._collapseExpendHandle);
+
+        // color event      ?????????????????????????????????
         // let colorpickeNodeArrs = this.node.querySelectorAll('.colorpicker-value').entries();
         // for (let arr of colorpickeNodeArrs) {
         //     arr[1].addEventListener('input', e => {
@@ -157,50 +232,12 @@ class EditJson {
         //         // e.target.parentNode.parentNode.querySelector('.value').innerText = e.target.value;
         //     });
         // }
-        $('.colorpicker-value').on('change', e => {
-            e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
-        });
-        this.node.addEventListener('click', e => {
-            if (e.target.className.match(/(value)|(name)/)) {
-                this.node.querySelectorAll('.value').forEach(node => {
-                    node.contentEditable = false;
-                });
-                this.node.querySelectorAll('.name').forEach(node => {
-                    node.contentEditable = false;
-                });
-                e.target.contentEditable = true;
-                e.target.focus();
-            } else {
-                let flag = true;
-                this.node.querySelectorAll('.value').forEach(node => {
-                    if (node.contentEditable === 'true') {
-                        node.contentEditable = false;
-                        flag = false;
-                    }
-                });
-                this.node.querySelectorAll('.name').forEach(node => {
-                    if (node.contentEditable === 'true') {
-                        node.contentEditable = false;
-                        flag = false;
-                    }
-                });
-                if (!flag) {
-                    // this.getData(); // refresh data
-                    // e.target.addEventListener('DOMCharacterDataModified', evt => {
-                    e.target.innerHTML = e.target.textContent;
-                    let parentNode = e.target.parentNode;
-                    while (!parentNode.className.includes('children')) {
-                        parentNode = parentNode.parentNode;
-                    }
-                    console.log(e.target, e.target.parentNode, parentNode);
-                    this._partialRender(parentNode);
-                    // });
-                }
-            }
-        });
+
+        $('.colorpicker-value').on('change', this._colorValueChangeHandle);
+        this.node.addEventListener('mousedown', this._editorValueChangeHandle);
     }
 }
 
 
 const editor = new EditJson('#editor');
-document.getElementById('test').onclick = e => editor.getData();
+// document.getElementById('test').onclick = e => editor.getData();

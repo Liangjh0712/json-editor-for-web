@@ -1,3 +1,12 @@
+/* div {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -khtml-user-select: none;
+  user-select: none;
+} */
+
+
 /* collapseObj style */
 
 .jsonView .collapseObj:before {
@@ -10,10 +19,13 @@
 
 .jsonView .insert:before {
   content: '\ \+';
+  margin-left: -2em;
+  margin-right: 1em;
 }
 
 .jsonView .delete:before {
   content: '\ \-';
+  margin-left: 1em;
 }
 
 
@@ -31,7 +43,8 @@
   display: inline-block;
 }
 
-.jsonView>.bracket {
+.jsonView>.rightBracket,
+.jsonView>.leftBracket {
   /* width: 2em; */
   height: 2em;
 }
@@ -42,10 +55,16 @@
   position: relative;
 }
 
+.jsonView .insert {
+  min-width: 100px;
+  padding-left: 1em;
+  margin-left: 3em;
+  line-height: 100%;
+}
 
 .jsonView .delete,
 .jsonView .insert {
-  padding-left: 0.5em;
+  /* padding-left: 0.5em; */
 }
 
 .jsonView>.comma {
@@ -76,7 +95,8 @@
   color: saddlebrown;
 }
 
-.jsonView>.bracket {
+.jsonView>.rightBracket,
+.jsonView>.leftBracket {
   color: slateblue;
 }
 
@@ -128,6 +148,11 @@
 
 .jsonView .insert:before {
   color: chocolate;
+}
+
+/*  insert active input background color */
+.insert-input {
+  background-color: antiquewhite;
 }
 
 
