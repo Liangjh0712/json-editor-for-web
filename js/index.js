@@ -8,21 +8,27 @@ class EditJson {
         this.htmlCodeStr = '';
         this.render(styleJSON);
         this._event();
-        // this.getData = this.getData.bind(this);
     }
     render(json) {
+        // delete useless  colorpicker node
+        document.querySelectorAll('.colorpicker').forEach(node => {
+            document.body.removeChild(node);
+        });
         this._getHtmlCodeByJson(json);
         this.node.innerHTML = this.htmlCodeStr;
+        $('.colorpicker-component').colorpicker();
+        this._renderEvent();
     }
 
     getData() {
         let temp = this.node.textContent;
-        // temp = temp.replace(/\<[^\>]*\>/gm, '');
-        // temp = JSON.stringify(temp);
-        // temp = temp.replace(/(\\n)|\ {2}/gm, '');
-        // temp = temp.replace(/\\+/gm, '\\');
-        console.log(JSON.parse(temp), temp);
-        // return temp;
+        temp = temp.replace(/\'(\")\'/gm, '\\\"'); // \" escape
+        try {
+            let data = JSON.parse(temp);
+            return data;
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     _getHtmlCodeByJson(json, key, comma) {
@@ -66,8 +72,14 @@ class EditJson {
                 this.htmlCodeStr += `<div class="value ${temp[1] || ''}">"${json}"</div>
                                     <div class="delete"></div>
                                     <div class="children"></div>
-                                    <div class="comma">${comma || ''}</div>
-                                    <div class="insert"></div>
+                                    <div class="comma">${comma || ''}</div>`;
+                this.htmlCodeStr += temp[0] === 'color-type' ? `<div contentEditable="false" class="input-group colorpicker-component" title="Using  option">
+                                        <input type="text" class="form-control input-lg colorpicker-value" style="display:none" value="${json}" />
+                                        <span class="input-group-addon">
+                                        <i style="border: solid 1px #2d3c4d"></i>
+                                        </span>
+                                    </div>` : '';
+                this.htmlCodeStr += `<div class="insert"></div>
                                     </div>`;
             }
         }
@@ -104,8 +116,8 @@ class EditJson {
     }
 
     _event() {
+        // expend collapse
         this.node.addEventListener('mousedown', e => {
-            e.preventDefault();
             const clickNode = e.target;
             switch (clickNode.className) {
                 case 'collapse':
@@ -122,7 +134,6 @@ class EditJson {
                 }
             }
         });
-
         //  hover background
         // this.node.addEventListener('mouseover', e => {
         //     e.target.className += ' active-background';
@@ -131,8 +142,29 @@ class EditJson {
         //     e.target.className = e.target.className.replace(/\ active\-background/gm, '');
         // });
     }
+    _renderEvent() {
+        // color event
+        // let colorpickeNodeArrs = this.node.querySelectorAll('.colorpicker-value').entries();
+        // for (let arr of colorpickeNodeArrs) {
+        //     arr[1].addEventListener('input', e => {
+        //         console.log(e.target);
+        //         // e.target.parentNode.parentNode.querySelector('.value').innerText = e.target.value;
+        //     });
+        // }
+
+        // this.node.querySelectorAll('.colorpicker-value').forEach(node => {
+        //     $(node).on('change', e => {
+        //         console.log(e.target);
+        //     });
+        // });
+
+        $('.colorpicker-value').on('change', e => {
+            e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
+        });
+    }
 }
 
 
 const editor = new EditJson('#editor');
 document.getElementById('test').onclick = e => editor.getData();
+$('.colorpicker1').colorpicker();
