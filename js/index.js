@@ -10,7 +10,13 @@ class EditJson {
         this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
         this._editorInsertHandle = this._editorInsertHandle.bind(this);
         this._editorDeleteHandle = this._editorDeleteHandle.bind(this);
-        this.htmlCodeStr = '';
+        this.htmlCodeStr = `<div class="auto-complete-ele"><select size =5>
+                                <option value ="volvo">Volvo</option>
+                                <option value ="saab">Saab</option>
+                                <option value="opel">Opel</option>
+                                <option value="audi">Audi</option>
+                            </select></div>`;
+        this.remaindData = this._getAllJsonKeys(styleJSON);
         this.render(styleJSON);
     }
 
@@ -26,15 +32,82 @@ class EditJson {
     }
 
     getData() {
-        let temp = this._getTextByHtml(this.node.innerHTML);
+        let temp = this._getTextByHtml(this.node.querySelector('.jsonView').innerHTML);
         temp = temp.replace(/\'(\")\'/gm, '\\\"'); // \" escape
         try {
             let data = JSON.parse(temp);
-            console.log(data);
             return data;
         } catch (e) {
             console.log(e);
         }
+    }
+
+    _getAllJsonKeys(json) {
+        const getObjectKeys = obj => {
+            let keysArr = Object.keys(obj);
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    let t = judgeType(obj[key]);
+                    if (t) keysArr = keysArr.concat(t);
+                }
+            }
+            return keysArr;
+        };
+
+        const getObjectArrayKeys = arr => {
+            let keysArr = [];
+            for (let value of arr) {
+                let t = judgeType(value);
+                if (t) keysArr = keysArr.concat(t);
+            }
+            return keysArr;
+        };
+
+        const judgeType = (value) => {
+            let temp = Object.prototype.toString.call(value);
+            let type = temp.match(/[a-zA-Z]+/g)[1];
+            switch (type) {
+                case 'Object':
+                {
+                    return getObjectKeys(value);
+                }
+                case 'Array':
+                {
+                    return getObjectArrayKeys(value);
+                }
+            }
+        };
+        let set = new Set(getObjectKeys(json));
+        return Array.from(set).sort();
+    }
+
+    _autoComplete(node) {
+        // console.log(node.offsetLeft);
+        let text = '';
+        // console.log(text);
+        const temp = e => {
+            text = e.target.textContent.replace(/^\"|\"$/mg, '');
+        };
+        node.removeEventListener('DOMCharacterDataModified', temp);
+        node.addEventListener('DOMCharacterDataModified', temp);
+        this.node.querySelector('.auto-complete-ele select').style.display = 'block';
+        let formerNode = node;
+        let [left, top, width] = [node.offsetLeft, node.offsetTop, node.offsetWidth];
+        while (node.parentNode !== this.node) {
+            if (node.className.includes('jsonView')) {
+                left += node.offsetLeft;
+                top += node.offsetTop;
+            }
+            node = node.parentNode;
+        }
+        this.node.querySelector('.auto-complete-ele select').style.left = left + 'px';
+        this.node.querySelector('.auto-complete-ele select').style.top = top + 'px';
+        this.node.querySelector('.auto-complete-ele select').style.width = (width > 100 ? width : 100) + 'px';
+        this.node.querySelector('.auto-complete-ele select').onclick = (e) => {
+            if (e.target.nodeName === 'OPTION') {
+                formerNode.textContent = `"${e.target.value}"`;
+            }
+        };
     }
 
     _getTextByHtml(text) {
@@ -130,7 +203,7 @@ class EditJson {
     _partialRender(node) {
         // let name = node.querySelector('.name').textContent;
         // let comma = node.querySelector('.rightBracket>.comma').textContent;
-        let text = node.querySelector('.leftBracket').textContent + node.querySelector('.children').textContent + node.querySelector('.rightBracket>span').textContent;
+        let text = node.querySelector('.leftBracket').textContent + node.querySelector('.children').textContent + node.querySelector('.rightBracket').querySelector('span').textContent;
         text = text.replace(/\'(\")\'/gm, '\\\"');
         text = text.replace(/\\/gm, '\\\\');
         // text = text.replace(/(\ {2})+/gm, '');
@@ -167,6 +240,7 @@ class EditJson {
         //     e.target.className = e.target.className.replace(/\ active\-background/gm, '');
         // });
     }
+
     _collapseExpendHandle(e) {
         const clickNode = e.target;
         switch (clickNode.className) {
@@ -212,6 +286,7 @@ class EditJson {
             if (e.target !== tempNode) {
                 e.target.focus();
                 e.target.className += ` editor-input`;
+                this._autoComplete(e.target);
             }
         }
         if (tempNode && e.target !== tempNode) {
@@ -219,6 +294,7 @@ class EditJson {
             while (!parentNode.className.includes('jsonView')) {
                 parentNode = parentNode.parentNode;
             }
+            this.node.querySelector('.auto-complete-ele select').style.display = 'none';
             this._partialRender(parentNode);
         }
         // this.getData(); // refresh data
@@ -261,7 +337,11 @@ class EditJson {
                 console.log(node.textContent);
                 node.innerHTML = this._getTextByHtml(text);
                 if (node.textContent.match(/[a-zA-Z]/)) { // the div includes something and need to be refresh
-                    let parentNode = node.parentNode.parentNode;
+                    let parentNode = '';
+                    if (node.parentNode.className.includes('rightBracket')) {
+                        parentNode = node.parentNode;
+                    }
+                    parentNode = parentNode.parentNode.parentNode;
                     while (!parentNode.className.includes('jsonView')) {
                         parentNode = parentNode.parentNode;
                     }
@@ -271,6 +351,7 @@ class EditJson {
             }
         }
     }
+
 
     _renderEvent() {
         // deldete event listener

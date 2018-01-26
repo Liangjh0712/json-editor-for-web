@@ -1,3 +1,21 @@
+/* auto-complete-ele */
+
+.auto-complete-ele {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.auto-complete-ele select {
+  position: absolute;
+  z-index: 999;
+  transform: translate(0, 2em);
+  outline: none;
+  display: none;
+}
+
+/* jsonView */
+
 .jsonView:hover>.insert,
 .jsonView:hover>.delete {
   visibility: visible;
