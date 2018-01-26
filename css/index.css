@@ -1,11 +1,11 @@
-/* div {
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  -khtml-user-select: none;
-  user-select: none;
-} */
+.jsonView:hover>.insert,
+.jsonView:hover>.delete {
+  visibility: visible;
+}
 
+/* jsonView .editor-option:hover .delete {
+  visibility: visible;
+} */
 
 /* collapseObj style */
 
@@ -28,6 +28,13 @@
   margin-left: 1em;
 }
 
+.jsonView>.insert {
+  visibility: hidden;
+}
+
+.jsonView>.delete {
+  visibility: hidden;
+}
 
 /* jsonView */
 
@@ -55,6 +62,10 @@
   position: relative;
 }
 
+.jsonView>.editor-option {
+  width: auto;
+}
+
 .jsonView .insert {
   min-width: 100px;
   padding-left: 1em;
@@ -71,7 +82,6 @@
   /* float: right; */
 }
 
-
 /* collapseObj */
 
 .jsonView .collapseObj,
@@ -79,7 +89,6 @@
   position: absolute;
   left: 0;
 }
-
 
 /* foot-color */
 
@@ -132,13 +141,11 @@
   color: rgb(27, 114, 228);
 }
 
-
 /* active background */
 
 .jsonView .active-background {
   background-color: aqua;
 }
-
 
 /* insert delete color */
 
@@ -151,10 +158,11 @@
 }
 
 /*  insert active input background color */
-.editor-input {
-  background-color: rgb(22, 204, 228);
-}
 
+.jsonView .editor-input {
+  background-color: rgb(22, 204, 228);
+  visibility: visible;
+}
 
 /* font-size */
 
@@ -171,7 +179,6 @@
 .jsonView .expendObj:before {
   font-size: 0.8em;
 }
-
 
 /* editor colorpicker style */
 

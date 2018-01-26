@@ -9,9 +9,11 @@ class EditJson {
         this._colorValueChangeHandle = this._colorValueChangeHandle.bind(this);
         this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
         this._editorInsertHandle = this._editorInsertHandle.bind(this);
+        this._editorDeleteHandle = this._editorDeleteHandle.bind(this);
         this.htmlCodeStr = '';
         this.render(styleJSON);
     }
+
     render(json) {
         // delete useless  colorpicker node
         document.querySelectorAll('.colorpicker').forEach(node => {
@@ -229,6 +231,23 @@ class EditJson {
         // });
     }
 
+    _editorDeleteHandle(e) {
+        if (e.target.className.includes('delete')) {
+            let parentNode = e.target.parentNode;
+            while (!parentNode.className.includes('jsonView')) {
+                parentNode = parentNode.parentNode;
+            }
+            if (parentNode.previousSibling && parentNode.previousSibling.nodeName === 'DIV') {
+                if (parentNode.previousSibling.querySelector('.rightBracket')) {
+                    parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
+                } else {
+                    parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.querySelector('.comma').innerHTML;
+                }
+            }
+            parentNode.parentNode.removeChild(parentNode);
+        }
+    }
+
     _editorInsertHandle(e) {
         if (e.target.className.includes('insert')) {
             let node = e.target;
@@ -237,16 +256,17 @@ class EditJson {
                 node.className += ' editor-input';
             } else {
                 node.contentEditable = false;
-                node.className = node.className.replace(/insert\-input/mg, '');
+                node.className = node.className.replace(/editor\-input/mg, '');
                 let text = node.innerHTML;
+                console.log(node.textContent);
                 node.innerHTML = this._getTextByHtml(text);
-                if (node.textContent.match(/[a-zA-Z]/)) {  // the div includes something and need to be refresh
+                if (node.textContent.match(/[a-zA-Z]/)) { // the div includes something and need to be refresh
                     let parentNode = node.parentNode.parentNode;
                     while (!parentNode.className.includes('jsonView')) {
                         parentNode = parentNode.parentNode;
                     }
                     // console.log(node.innerHTML);
-                    // this._partialRender(parentNode);
+                    this._partialRender(parentNode);
                 }
             }
         }
@@ -255,9 +275,11 @@ class EditJson {
     _renderEvent() {
         // deldete event listener
         this.node.removeEventListener('dblclick', this._editorInsertHandle);
+        this.node.removeEventListener('dblclick', this._editorDeleteHandle);
         this.node.removeEventListener('mousedown', this._collapseExpendHandle);
         $('.colorpicker-value').unbind('change', this._colorValueChangeHandle);
         this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
+
         // expend collapse
         this.node.addEventListener('mousedown', this._collapseExpendHandle);
 
@@ -273,6 +295,7 @@ class EditJson {
         $('.colorpicker-value').on('change', this._colorValueChangeHandle);
         this.node.addEventListener('dblclick', this._editorValueChangeHandle);
         this.node.addEventListener('dblclick', this._editorInsertHandle);
+        this.node.addEventListener('dblclick', this._editorDeleteHandle);
     }
 }
 
