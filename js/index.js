@@ -387,6 +387,7 @@ class EditJson {
         this.node.removeEventListener('mousedown', this._collapseExpendHandle);
         $('.colorpicker-value').unbind('change', this._colorValueChangeHandle);
         this.node.removeEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
+        this.node.removeEventListener('DOMCharacterDataModified', this._autoComplete);
         this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
 
         // expend collapse
