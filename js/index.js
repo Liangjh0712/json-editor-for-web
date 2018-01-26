@@ -177,6 +177,14 @@ class EditJson {
     }
 
     _judgeFootColor(key, value) {
+        if (value && (String(value) === 'true' || String(value) === 'false')) {
+            return ['bool-type', 'bool-val'];
+        }
+
+        if (value && !isNaN(value)) {
+            return ['number-type', 'number-val'];
+        }
+
         let type = Object.prototype.toString.call(value);
         switch (type) {
             case '[object String]':
@@ -186,18 +194,6 @@ class EditJson {
                 } else {
                     return '';
                 }
-            }
-            case '[object Boolean]':
-            {
-                return ['bool-type', 'bool-val'];
-            }
-            case '[object Number]':
-            {
-                return ['number-type', 'number-val'];
-            }
-            case '[object Date]':
-            {
-                return ['date-type', 'data-val'];
             }
             default:
             {
@@ -214,7 +210,12 @@ class EditJson {
         text = text.replace(/\\/gm, '\\\\');
         // text = text.replace(/(\ {2})+/gm, '');
         text = text.replace(/&nbsp;/ig, '');
-        let json = JSON.parse(text);
+        let json = '';
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            return true;
+        }
         this.htmlCodeStr = '';
         let arrFlag = true;
         if (Object.prototype.toString.call(json) === '[object Array]') {
@@ -304,7 +305,11 @@ class EditJson {
                 parentNode = parentNode.parentNode;
             }
             this.node.querySelector('.auto-complete-ele select').style.display = 'none';
-            this._partialRender(parentNode);
+            if (this._partialRender(parentNode)) {
+                tempNode.contentEditable = true;
+                tempNode.focus();
+                tempNode.className += ` editor-input`;
+            }
         }
         // this.getData(); // refresh data
         // e.target.addEventListener('DOMCharacterDataModified', evt => {  //&& e.target.className.match(/(value)|(name)/m)
@@ -349,13 +354,19 @@ class EditJson {
                     let parentNode = '';
                     if (node.parentNode.className.includes('rightBracket')) {
                         parentNode = node.parentNode;
+                    } else {
+                        parentNode = node;
                     }
                     parentNode = parentNode.parentNode.parentNode;
                     while (!parentNode.className.includes('jsonView')) {
                         parentNode = parentNode.parentNode;
                     }
                     // console.log(node.innerHTML);
-                    this._partialRender(parentNode);
+                    if (this._partialRender(parentNode)) {
+                        node.contentEditable = true;
+                        node.focus();
+                        node.className += ` editor-input`;
+                    }
                 }
             }
         }
