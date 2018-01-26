@@ -1,7 +1,8 @@
 class EditJson {
-    constructor(id) {
+    constructor(id, styleJSON) {
         try {
             this.node = document.querySelector(id);
+            this.styleJSON = styleJSON;
         } catch (e) {
             console.log(e);
         }
@@ -10,14 +11,12 @@ class EditJson {
         this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
         this._editorInsertHandle = this._editorInsertHandle.bind(this);
         this._editorDeleteHandle = this._editorDeleteHandle.bind(this);
+        this.__valueToColorChangeHandle = this.__valueToColorChangeHandle.bind(this);
+        this._autoComplete = this._autoComplete.bind(this);
         this.htmlCodeStr = `<div class="auto-complete-ele"><select size =5>
-                                <option value ="volvo">Volvo</option>
-                                <option value ="saab">Saab</option>
-                                <option value="opel">Opel</option>
-                                <option value="audi">Audi</option>
                             </select></div>`;
-        this.remaindData = this._getAllJsonKeys(styleJSON);
-        this.render(styleJSON);
+        this.remaindData = this._getAllJsonKeys(this.styleJSON);
+        this.render(this.styleJSON);
     }
 
     render(json) {
@@ -81,15 +80,22 @@ class EditJson {
         return Array.from(set).sort();
     }
 
-    _autoComplete(node) {
-        // console.log(node.offsetLeft);
-        let text = '';
-        // console.log(text);
-        const temp = e => {
-            text = e.target.textContent.replace(/^\"|\"$/mg, '');
-        };
-        node.removeEventListener('DOMCharacterDataModified', temp);
-        node.addEventListener('DOMCharacterDataModified', temp);
+    _autoComplete(e) {
+        let node = e.target.parentNode;
+        if (!node.className.match(/(name)|(value)/) || node.className.match(/color-val/)) {
+            this.node.querySelector('.auto-complete-ele select').style.display = 'none';
+            return;
+        }
+        let text = e.target.textContent.replace(/^\"|\"$/mg, '');
+        let arr = this.remaindData.filter(value => value.includes(text));
+        if (!arr || arr.length === 0) {
+            this.node.querySelector('.auto-complete-ele select').style.display = 'none';
+        }
+        let str = '';
+        for (let i of arr) {
+            str = str + `<option value="${i}">${i}</option>`;
+        }
+        this.node.querySelector('.auto-complete-ele select').innerHTML = str;
         this.node.querySelector('.auto-complete-ele select').style.display = 'block';
         let formerNode = node;
         let [left, top, width] = [node.offsetLeft, node.offsetTop, node.offsetWidth];
@@ -102,7 +108,7 @@ class EditJson {
         }
         this.node.querySelector('.auto-complete-ele select').style.left = left + 'px';
         this.node.querySelector('.auto-complete-ele select').style.top = top + 'px';
-        this.node.querySelector('.auto-complete-ele select').style.width = (width > 100 ? width : 100) + 'px';
+        this.node.querySelector('.auto-complete-ele select').style.width = (width > 150 ? width : 150) + 'px';
         this.node.querySelector('.auto-complete-ele select').onclick = (e) => {
             if (e.target.nodeName === 'OPTION') {
                 formerNode.textContent = `"${e.target.value}"`;
@@ -290,7 +296,6 @@ class EditJson {
             if (e.target !== tempNode) {
                 e.target.focus();
                 e.target.className += ` editor-input`;
-                this._autoComplete(e.target);
             }
         }
         if (tempNode && e.target !== tempNode) {
@@ -356,6 +361,13 @@ class EditJson {
         }
     }
 
+    __valueToColorChangeHandle(e) {
+        if (e.target.parentNode.className.includes('color-val')) {
+            let colorValue = e.target.textContent.replace(/\"/mg, '');
+            e.target.parentNode.parentNode.querySelector('.colorpicker-value').value = colorValue;
+            e.target.parentNode.parentNode.querySelector('i').style.backgroundColor = colorValue;
+        }
+    }
 
     _renderEvent() {
         // deldete event listener
@@ -363,6 +375,7 @@ class EditJson {
         this.node.removeEventListener('dblclick', this._editorDeleteHandle);
         this.node.removeEventListener('mousedown', this._collapseExpendHandle);
         $('.colorpicker-value').unbind('change', this._colorValueChangeHandle);
+        this.node.removeEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
         this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
 
         // expend collapse
@@ -378,6 +391,8 @@ class EditJson {
         // }
 
         $('.colorpicker-value').on('change', this._colorValueChangeHandle);
+        this.node.addEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
+        this.node.addEventListener('DOMCharacterDataModified', this._autoComplete);
         this.node.addEventListener('dblclick', this._editorValueChangeHandle);
         this.node.addEventListener('dblclick', this._editorInsertHandle);
         this.node.addEventListener('dblclick', this._editorDeleteHandle);
@@ -385,5 +400,5 @@ class EditJson {
 }
 
 
-const editor = new EditJson('#editor');
+const editor = new EditJson('#editor', styleJSON);
 document.getElementById('test').onclick = e => console.log(editor.getData());
