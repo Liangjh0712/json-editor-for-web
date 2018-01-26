@@ -151,8 +151,8 @@
 }
 
 /*  insert active input background color */
-.insert-input {
-  background-color: antiquewhite;
+.editor-input {
+  background-color: rgb(22, 204, 228);
 }
 
 
