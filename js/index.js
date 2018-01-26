@@ -203,19 +203,23 @@ class EditJson {
     _partialRender(node) {
         // let name = node.querySelector('.name').textContent;
         // let comma = node.querySelector('.rightBracket>.comma').textContent;
-        let text = node.querySelector('.leftBracket').textContent + node.querySelector('.children').textContent + node.querySelector('.rightBracket').querySelector('span').textContent;
+        let text = node.querySelector('.leftBracket').textContent + node.querySelector('.children').textContent + node.lastChild.querySelector('span').textContent;
         text = text.replace(/\'(\")\'/gm, '\\\"');
         text = text.replace(/\\/gm, '\\\\');
         // text = text.replace(/(\ {2})+/gm, '');
         text = text.replace(/&nbsp;/ig, '');
         let json = JSON.parse(text);
         this.htmlCodeStr = '';
+        let arrFlag = true;
+        if (Object.prototype.toString.call(json) === '[object Array]') {
+            arrFlag = '';
+        }
         let size = Object.keys(json).length;
         for (let key in json) {
             if (size-- > 1) {
-                this._getHtmlCodeByJson(json[key], key, ',');
+                this._getHtmlCodeByJson(json[key], arrFlag && key, ',');
             } else {
-                this._getHtmlCodeByJson(json[key], key, '');
+                this._getHtmlCodeByJson(json[key], arrFlag && key, '');
             }
         }
         // this._getHtmlCodeByJson(json, key, comma);
@@ -382,4 +386,4 @@ class EditJson {
 
 
 const editor = new EditJson('#editor');
-document.getElementById('test').onclick = e => editor.getData();
+document.getElementById('test').onclick = e => console.log(editor.getData());
