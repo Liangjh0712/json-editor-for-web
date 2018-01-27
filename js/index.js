@@ -7,7 +7,7 @@ class EditJson {
             console.log(e);
         }
         this._collapseExpendHandle = this._collapseExpendHandle.bind(this);
-        this._colorValueChangeHandle = this._colorValueChangeHandle.bind(this);
+        this._colorToValueChangeHandle = this._colorToValueChangeHandle.bind(this);
         this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
         this._editorInsertHandle = this._editorInsertHandle.bind(this);
         this._editorDeleteHandle = this._editorDeleteHandle.bind(this);
@@ -16,6 +16,7 @@ class EditJson {
         this.htmlCodeStr = `<div class="auto-complete-ele"><select size =5>
                             </select></div>`;
         this.remaindData = this._getAllJsonKeys(this.styleJSON);
+        this.data = '';
         this.render(this.styleJSON);
     }
 
@@ -31,14 +32,7 @@ class EditJson {
     }
 
     getData() {
-        let temp = this._getTextByHtml(this.node.querySelector('.jsonView').innerHTML);
-        temp = temp.replace(/\'(\")\'/gm, '\\\"'); // \" escape
-        try {
-            let data = JSON.parse(temp);
-            return data;
-        } catch (e) {
-            console.log(e);
-        }
+        return this.data;
     }
 
     _getAllJsonKeys(json) {
@@ -213,6 +207,7 @@ class EditJson {
         let json = '';
         try {
             json = JSON.parse(text);
+            this.data = json;
         } catch (e) {
             return true;
         }
@@ -270,7 +265,7 @@ class EditJson {
         }
     }
 
-    _colorValueChangeHandle(e) {
+    _colorToValueChangeHandle(e) {
         e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
     }
 
@@ -348,7 +343,7 @@ class EditJson {
                 node.contentEditable = false;
                 node.className = node.className.replace(/editor\-input/mg, '');
                 let text = node.innerHTML;
-                console.log(node.textContent);
+                // console.log(node.textContent); /s
                 node.innerHTML = this._getTextByHtml(text);
                 if (node.textContent.match(/[a-zA-Z]/)) { // the div includes something and need to be refresh
                     let parentNode = '';
@@ -382,27 +377,24 @@ class EditJson {
 
     _renderEvent() {
         // deldete event listener
-        this.node.removeEventListener('dblclick', this._editorInsertHandle);
-        this.node.removeEventListener('dblclick', this._editorDeleteHandle);
-        this.node.removeEventListener('mousedown', this._collapseExpendHandle);
-        $('.colorpicker-value').unbind('change', this._colorValueChangeHandle);
-        this.node.removeEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
-        this.node.removeEventListener('DOMCharacterDataModified', this._autoComplete);
-        this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
+        // this.node.removeEventListener('dblclick', this._editorInsertHandle);
+        // this.node.removeEventListener('dblclick', this._editorDeleteHandle);
+        // this.node.removeEventListener('mousedown', this._collapseExpendHandle);
+        // $('.colorpicker-value').unbind('change', this._colorToValueChangeHandle);
+        // this.node.removeEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
+        // this.node.removeEventListener('DOMCharacterDataModified', this._autoComplete);
+        // this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
 
         // expend collapse
         this.node.addEventListener('mousedown', this._collapseExpendHandle);
 
         // color event      ?????????????????????????????????
-        // let colorpickeNodeArrs = this.node.querySelectorAll('.colorpicker-value').entries();
-        // for (let arr of colorpickeNodeArrs) {
-        //     arr[1].addEventListener('input', e => {
-        //         console.log(e.target);
-        //         // e.target.parentNode.parentNode.querySelector('.value').innerText = e.target.value;
-        //     });
-        // }
+        let colorpickeNodeArrs = this.node.querySelectorAll('.colorpicker-value').entries();
+        for (let arr of colorpickeNodeArrs) {
+            arr[1].onchange = this._colorToValueChangeHandle;
+        }
 
-        $('.colorpicker-value').on('change', this._colorValueChangeHandle);
+        // $('.colorpicker-value').on('change', this._colorToValueChangeHandle);
         this.node.addEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
         this.node.addEventListener('DOMCharacterDataModified', this._autoComplete);
         this.node.addEventListener('dblclick', this._editorValueChangeHandle);
@@ -413,4 +405,3 @@ class EditJson {
 
 
 const editor = new EditJson('#editor', styleJSON);
-document.getElementById('test').onclick = e => console.log(editor.getData());
