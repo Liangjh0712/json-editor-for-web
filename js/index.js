@@ -249,19 +249,12 @@ class EditJson {
 
     _collapseExpendHandle(e) {
         const clickNode = e.target;
-        switch (clickNode.className) {
-            case 'collapseObj':
-            {
-                clickNode.className = 'expendObj';
-                clickNode.parentNode.querySelector('.children').style.display = 'inline-block';
-                break;
-            }
-            case 'expendObj':
-            {
-                clickNode.className = 'collapseObj';
-                clickNode.parentNode.querySelector('.children').style.display = 'none';
-                break;
-            }
+        if (clickNode.className.includes('collapseObj')) {
+            clickNode.className = 'expendObj';
+            clickNode.parentNode.querySelector('.children').style.display = 'inline-block';
+        } else if (clickNode.className.includes('expendObj')) {
+            clickNode.className = 'collapseObj';
+            clickNode.parentNode.querySelector('.children').style.display = 'none';
         }
     }
 
