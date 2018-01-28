@@ -226,9 +226,9 @@ class EditJson {
         }
         // this._getHtmlCodeByJson(json, key, comma);
         // delete useless  colorpicker node
-        document.querySelectorAll('.colorpicker').forEach(node => {
-            document.body.removeChild(node);
-        });
+        // document.querySelectorAll('.colorpicker').forEach(node => {
+        //     document.body.removeChild(node);
+        // });
         node.querySelector('.children').innerHTML = this.htmlCodeStr;
         $('.colorpicker-component').colorpicker();
         this._renderEvent();
@@ -327,6 +327,7 @@ class EditJson {
     }
 
     _editorInsertHandle(e) {
+        this.node.querySelector('.auto-complete-ele select').style.display = 'none';
         if (e.target.className.includes('insert')) {
             let node = e.target;
             if (node.contentEditable === 'false') {
