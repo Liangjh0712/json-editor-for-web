@@ -76,7 +76,7 @@ visibility: visible;
 .jsonView>.rightBracket,
 .jsonView>.leftBracket {
   /* width: 2em; */
-  height: 2em;
+  /* height: 2em; */
 }
 
 .jsonView {

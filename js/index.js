@@ -314,14 +314,14 @@ class EditJson {
             }
             if (parentNode.previousSibling && parentNode.previousSibling.nodeName === 'DIV') {
                 if (parentNode.previousSibling.querySelector('.rightBracket')) {
-                    if (parentNode.lastChild.className.includes('comma')) {
-                        parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.lastChild.innerHTML;
+                    if (parentNode.querySelector('.children').nextElementSibling.className.includes('comma')) {
+                        parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.querySelector('.children').nextElementSibling.innerHTML;
                     } else if (parentNode.querySelector('.rightBracket>.comma')) {
                         parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
                     }
                 } else {
-                    if (parentNode.lastChild.className.includes('comma')) {
-                        parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.lastChild.innerHTML;
+                    if (parentNode.querySelector('.children').nextElementSibling.className.includes('comma')) {
+                        parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.querySelector('.children').nextElementSibling.innerHTML;
                     } else if (parentNode.querySelector('.rightBracket>.comma')) {
                         parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
                     }
@@ -346,7 +346,7 @@ class EditJson {
                     while (!temp.className.includes('jsonView')) {
                         temp = temp.parentNode;
                     }
-                    if (temp.nextSibling && temp.nextSibling.nodeName === 'DIV') {
+                    if (temp.nextElementSibling && temp.nextElementSibling.nodeName === 'DIV') {
                         if (!text.match(/\,$/mg)) {
                             text += ',';
                         }
