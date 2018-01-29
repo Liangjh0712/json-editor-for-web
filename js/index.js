@@ -101,11 +101,12 @@ class EditJson {
         this.node.querySelector('.auto-complete-ele select').style.left = left + 'px';
         this.node.querySelector('.auto-complete-ele select').style.top = top + 'px';
         this.node.querySelector('.auto-complete-ele select').style.width = (width > 150 ? width : 150) + 'px';
-        this.node.querySelector('.auto-complete-ele select').onclick = (e) => {
+        const optionValueInserted = e => {
             if (e.target.nodeName === 'OPTION') {
                 formerNode.textContent = `"${e.target.value}"`;
             }
         };
+        this.node.querySelector('.auto-complete-ele select').addEventListener('mousedown', optionValueInserted);
     }
 
     _getPlainText(htmlContent) {
@@ -349,11 +350,6 @@ class EditJson {
                     if (temp.nextElementSibling && temp.nextElementSibling.nodeName === 'DIV') {
                         if (!text.match(/\,$/mg)) {
                             text += ',';
-                        }
-                    }
-                    if (temp.previousSibling && temp.previousSibling.nodeName === 'DIV') {
-                        if (!text.match(/^\,/mg)) {
-                            text = ',' + text;
                         }
                     }
                     node.innerHTML = text;
