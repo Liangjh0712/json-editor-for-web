@@ -7,32 +7,30 @@ class EditJson {
             console.log(e);
         }
         this._collapseExpendHandle = this._collapseExpendHandle.bind(this);
-        this._colorToValueChangeHandle = this._colorToValueChangeHandle.bind(this);
-        this._editorValueChangeHandle = this._editorValueChangeHandle.bind(this);
+        this._colorValueChangedHandle = this._colorValueChangedHandle.bind(this);
+        this._editorValueChangedHandle = this._editorValueChangedHandle.bind(this);
         this._editorInsertHandle = this._editorInsertHandle.bind(this);
         this._editorDeleteHandle = this._editorDeleteHandle.bind(this);
-        this.__valueToColorChangeHandle = this.__valueToColorChangeHandle.bind(this);
+        this._colorPickerChangedHandle = this._colorPickerChangedHandle.bind(this);
         this._autoComplete = this._autoComplete.bind(this);
-        this.htmlCodeStr = `<div class="auto-complete-ele"><select size =5>
+        this.editorHtml = `<div class="auto-complete-ele"><select size =5>
                             </select></div>`;
-        this.remaindData = this._getAllJsonKeys(this.styleJSON);
-        this.data = '';
+        this.autocompleteSource = this._getAllJsonKeys(this.styleJSON);
+        this.exportStyleJson = null;
         this.render(this.styleJSON);
     }
 
     render(json) {
         // delete useless  colorpicker node
-        document.querySelectorAll('.colorpicker').forEach(node => {
-            document.body.removeChild(node);
-        });
-        this._getHtmlCodeByJson(json);
-        this.node.innerHTML = this.htmlCodeStr;
+        $('.colorpicker').remove();
+        this.editorHtml += this._getTemplateHtml(json);
+        this.node.innerHTML = this.editorHtml;
         $('.colorpicker-component').colorpicker();
-        this._renderEvent();
+        this._bindEvents();
     }
 
-    getData() {
-        return this.data;
+    getStyleJson() {
+        return this.exportStyleJson;
     }
 
     _getAllJsonKeys(json) {
@@ -81,7 +79,7 @@ class EditJson {
             return;
         }
         let text = e.target.textContent.replace(/^\"|\"$/mg, '');
-        let arr = this.remaindData.filter(value => value.includes(text));
+        let arr = this.autocompleteSource.filter(value => value.includes(text));
         if (!arr || arr.length === 0) {
             this.node.querySelector('.auto-complete-ele select').style.display = 'none';
         }
@@ -110,67 +108,69 @@ class EditJson {
         };
     }
 
-    _getTextByHtml(text) {
-        text = text.replace(/\<[^\>]*\>/mg, '');
-        text = text.replace(/\ +\n/mg, '');
-        text = text.replace(/&nbsp;/img, '');
-        return text;
+    _getPlainText(htmlContent) {
+        htmlContent = htmlContent.replace(/\<[^\>]*\>/mg, '');
+        htmlContent = htmlContent.replace(/\ +\n/mg, '');
+        htmlContent = htmlContent.replace(/&nbsp;/img, '');
+        return htmlContent;
     }
 
-    _getHtmlCodeByJson(json, key, comma) {
+    _getTemplateHtml(json, key, comma) {
+        let templateHtml = '';
         let typeStr = Object.prototype.toString.call(json);
         switch (typeStr) {
             case '[object Object]':
             {
-                this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
-                this.htmlCodeStr += key ? `<div class="name object-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="leftBracket">{</div>
+                templateHtml += `<div class="jsonView"><div class="expendObj"></div>`;
+                templateHtml += key ? `<div class="name object-type">"${key}"</div><div class="separator">:</div>` : ``;
+                templateHtml += `<div class="leftBracket">{</div>
                   <div class="children">`;
                 let length = Object.keys(json).length;
                 for (let key in json) {
                     let flag = --length > 0 ? ',' : '';
-                    this._getHtmlCodeByJson(json[key], key, flag);
+                    templateHtml += this._getTemplateHtml(json[key], key, flag);
                 }
-                this.htmlCodeStr += `</div>
-                  <div class="rightBracket"><span>}</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert"></div></div></div>`;
+                templateHtml += `</div>
+                  <div class="rightBracket"><span>}</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert" contentEditable="false"></div></div></div>`;
                 break;
             }
             case '[object Array]':
             {
-                this.htmlCodeStr += `<div class="jsonView"><div class="expendObj"></div>`;
-                this.htmlCodeStr += key ? `<div class="name array-type">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="leftBracket">[</div>
+                templateHtml += `<div class="jsonView"><div class="expendObj"></div>`;
+                templateHtml += key ? `<div class="name array-type">"${key}"</div><div class="separator">:</div>` : ``;
+                templateHtml += `<div class="leftBracket">[</div>
                   <div class="children">`;
                 let length = json.length;
                 for (let value of json) {
                     let flag = --length > 0 ? ',' : '';
-                    this._getHtmlCodeByJson(value, '', flag);
+                    templateHtml += this._getTemplateHtml(value, '', flag);
                 }
-                this.htmlCodeStr += `</div>
-                  <div class="rightBracket"><span>]</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert"></div></div></div>`;
+                templateHtml += `</div>
+                  <div class="rightBracket"><span>]</span><div class="comma">${comma || ''}</div><div class="delete"></div><div class="insert" contentEditable="false"></div></div></div>`;
                 break;
             }
             default:
             {
-                let temp = this._judgeFootColor(key, json);
-                this.htmlCodeStr += `<div class="jsonView">`;
-                this.htmlCodeStr += key ? `<div class="name ${temp[0] || ''}">"${key}"</div><div class="separator">:</div>` : ``;
-                this.htmlCodeStr += `<div class="value ${temp[1] || ''}">"${json}"</div>
+                let temp = this._renderFontColor(key, json);
+                templateHtml += `<div class="jsonView"><div class="delete"></div>`;
+                templateHtml += key ? `<div class="name ${temp[0] || ''}">"${key}"</div><div class="separator">:</div>` : ``;
+                templateHtml += `<div class="value ${temp[1] || ''}">"${json}"</div>
                                     <div class="children"></div>
                                     <div class="comma">${comma || ''}</div>`;
-                this.htmlCodeStr += temp[0] === 'color-type' ? `<div contentEditable="false" class="input-group colorpicker-component" title="Using  option">
+                templateHtml += temp[0] === 'color-type' ? `<div contentEditable="false" class="input-group colorpicker-component" title="Using  option">
                                         <input type="text" class="form-control input-lg colorpicker-value" style="display:none" value="${json}" />
                                         <span class="input-group-addon">
                                         <i style="border: solid 1px #2d3c4d"></i>
                                         </span>
                                     </div>` : '';
-                this.htmlCodeStr += `<div class="delete"></div><div class="insert"></div>
+                templateHtml += `<div class="insert" contentEditable="false"></div>
                                     </div>`;
             }
         }
+        return templateHtml;
     }
 
-    _judgeFootColor(key, value) {
+    _renderFontColor(key, value) {
         if (value && (String(value) === 'true' || String(value) === 'false')) {
             return ['bool-type', 'bool-val'];
         }
@@ -207,44 +207,33 @@ class EditJson {
         let json = '';
         try {
             json = JSON.parse(text);
-            this.data = json;
+            this.exportStyleJson = json;
         } catch (e) {
             return true;
         }
-        this.htmlCodeStr = '';
         let arrFlag = true;
         if (Object.prototype.toString.call(json) === '[object Array]') {
             arrFlag = '';
         }
         let size = Object.keys(json).length;
+        let tempHtml = '';
         for (let key in json) {
             if (size-- > 1) {
-                this._getHtmlCodeByJson(json[key], arrFlag && key, ',');
+                tempHtml += this._getTemplateHtml(json[key], arrFlag && key, ',');
             } else {
-                this._getHtmlCodeByJson(json[key], arrFlag && key, '');
+                tempHtml += this._getTemplateHtml(json[key], arrFlag && key, '');
             }
         }
-        // this._getHtmlCodeByJson(json, key, comma);
+        // this._getTemplateHtml(json, key, comma);
         // delete useless  colorpicker node
         // document.querySelectorAll('.colorpicker').forEach(node => {
         //     document.body.removeChild(node);
         // });
-        node.querySelector('.children').innerHTML = this.htmlCodeStr;
+        node.querySelector('.children').innerHTML = tempHtml;
         $('.colorpicker-component').colorpicker();
-        this._renderEvent();
-        // console.log(Object.keys(json).length, this.htmlCodeStr);
+        this._bindEvents();
+        // console.log(Object.keys(json).length, this.editorHtml);
         // let obj = JSON.parse(text);
-    }
-
-    _event() {
-
-        //  hover background
-        // this.node.addEventListener('mouseover', e => {
-        //     e.target.className += ' active-background';
-        // });
-        // this.node.addEventListener('mouseout', e => {
-        //     e.target.className = e.target.className.replace(/\ active\-background/gm, '');
-        // });
     }
 
     _collapseExpendHandle(e) {
@@ -258,17 +247,25 @@ class EditJson {
         }
     }
 
-    _colorToValueChangeHandle(e) {
+    _colorPickerChangedHandle(e) {
         e.target.parentNode.parentNode.querySelector('.value').innerText = `"${e.target.value}"`;
     }
 
-    _editorValueChangeHandle(e) {
+    _colorValueChangedHandle(e) {
+        if (e.target.parentNode.className.includes('color-val')) {
+            let colorValue = e.target.textContent.replace(/\"/mg, '');
+            e.target.parentNode.parentNode.querySelector('.colorpicker-value').value = colorValue;
+            e.target.parentNode.parentNode.querySelector('i').style.backgroundColor = colorValue;
+        }
+    }
+
+    _editorValueChangedHandle(e) {
         let tempNode = '';
         this.node.querySelectorAll('.value').forEach(node => {
             if (node.contentEditable === 'true') {
                 node.innerHTML = node.textContent;
                 node.contentEditable = false;
-                node.className = node.className.replace(/insert\-input/mg, '');
+                node.className = node.className.replace(/editor\-input/mg, '');
                 tempNode = node;
             }
         });
@@ -276,7 +273,7 @@ class EditJson {
             if (node.contentEditable === 'true') {
                 node.innerHTML = node.textContent;
                 node.contentEditable = false;
-                node.className = node.className.replace(/insert\-input/mg, '');
+                node.className = node.className.replace(/editor\-input/mg, '');
                 tempNode = node;
             }
         });
@@ -299,7 +296,7 @@ class EditJson {
                 tempNode.className += ` editor-input`;
             }
         }
-        // this.getData(); // refresh data
+        // this.getStyleJson(); // refresh exportStyleJson
         // e.target.addEventListener('DOMCharacterDataModified', evt => {  //&& e.target.className.match(/(value)|(name)/m)
         // let parentNode = e.target.parentNode;
         // while (!parentNode.className.includes('children')) {
@@ -317,9 +314,17 @@ class EditJson {
             }
             if (parentNode.previousSibling && parentNode.previousSibling.nodeName === 'DIV') {
                 if (parentNode.previousSibling.querySelector('.rightBracket')) {
-                    parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
+                    if (parentNode.lastChild.className.includes('comma')) {
+                        parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.lastChild.innerHTML;
+                    } else if (parentNode.querySelector('.rightBracket>.comma')) {
+                        parentNode.previousSibling.querySelector('.rightBracket>.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
+                    }
                 } else {
-                    parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.querySelector('.comma').innerHTML;
+                    if (parentNode.lastChild.className.includes('comma')) {
+                        parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.lastChild.innerHTML;
+                    } else if (parentNode.querySelector('.rightBracket>.comma')) {
+                        parentNode.previousSibling.querySelector('.comma').innerHTML = parentNode.querySelector('.rightBracket>.comma').innerHTML;
+                    }
                 }
             }
             parentNode.parentNode.removeChild(parentNode);
@@ -327,19 +332,32 @@ class EditJson {
     }
 
     _editorInsertHandle(e) {
-        this.node.querySelector('.auto-complete-ele select').style.display = 'none';
-        if (e.target.className.includes('insert')) {
-            let node = e.target;
-            if (node.contentEditable === 'false') {
-                node.contentEditable = true;
-                node.className += ' editor-input';
-            } else {
-                node.contentEditable = false;
+        let nodeList = this.node.querySelectorAll('.insert').entries();
+        for (let n of nodeList) {
+            if (n[1].contentEditable === 'true') {
+                let node = n[1];
                 node.className = node.className.replace(/editor\-input/mg, '');
-                let text = node.innerHTML;
-                // console.log(node.textContent); /s
-                node.innerHTML = this._getTextByHtml(text);
-                if (node.textContent.match(/[a-zA-Z]/)) { // the div includes something and need to be refresh
+                if (node.textContent.match(/[a-zA-Z0-9]/)) { // the div includes something and need to be refresh
+
+                    let text = node.innerHTML;
+                    // console.log(node.textContent); /s
+                    text = this._getPlainText(text);
+                    let temp = node.parentNode;
+                    while (!temp.className.includes('jsonView')) {
+                        temp = temp.parentNode;
+                    }
+                    if (temp.nextSibling && temp.nextSibling.nodeName === 'DIV') {
+                        if (!text.match(/\,$/mg)) {
+                            text += ',';
+                        }
+                    }
+                    if (temp.previousSibling && temp.previousSibling.nodeName === 'DIV') {
+                        if (!text.match(/^\,/mg)) {
+                            text = ',' + text;
+                        }
+                    }
+                    node.innerHTML = text;
+
                     let parentNode = '';
                     if (node.parentNode.className.includes('rightBracket')) {
                         parentNode = node.parentNode;
@@ -350,34 +368,52 @@ class EditJson {
                     while (!parentNode.className.includes('jsonView')) {
                         parentNode = parentNode.parentNode;
                     }
-                    // console.log(node.innerHTML);
+
                     if (this._partialRender(parentNode)) {
                         node.contentEditable = true;
-                        node.focus();
-                        node.className += ` editor-input`;
+                        node.className += ' editor-error';
+                    } else {
+                        if (node.previousSibling.nodeName === 'BR') {
+                            node.parentNode.removeChild(node.previousSibling);
+                        }
+                        node.contentEditable = false;
+                        node.className = node.className.replace(/editor\-error/mg, '');
+                        node.className = node.className.replace(/insert\-margin/mg, '');
                     }
+                } else {
+                    if (node.previousSibling.nodeName === 'BR') {
+                        node.parentNode.removeChild(node.previousSibling);
+                    }
+                    node.contentEditable = false;
+                    node.className = node.className.replace(/editor\-error/mg, '');
+                    node.className = node.className.replace(/insert\-margin/mg, '');
                 }
+            }
+        }
+
+        this.node.querySelector('.auto-complete-ele select').style.display = 'none';
+        if (e.target.className.includes('insert')) {
+            let node = e.target;
+            if (node.contentEditable === 'false') {
+                if (node.previousSibling.nodeName !== 'BR') {
+                    node.insertAdjacentHTML('beforebegin', `<br \\>`);
+                    node.className += ' insert-margin';
+                }
+                node.contentEditable = true;
+                node.focus();
             }
         }
     }
 
-    __valueToColorChangeHandle(e) {
-        if (e.target.parentNode.className.includes('color-val')) {
-            let colorValue = e.target.textContent.replace(/\"/mg, '');
-            e.target.parentNode.parentNode.querySelector('.colorpicker-value').value = colorValue;
-            e.target.parentNode.parentNode.querySelector('i').style.backgroundColor = colorValue;
-        }
-    }
-
-    _renderEvent() {
+    _bindEvents() {
         // deldete event listener
         // this.node.removeEventListener('dblclick', this._editorInsertHandle);
         // this.node.removeEventListener('dblclick', this._editorDeleteHandle);
         // this.node.removeEventListener('mousedown', this._collapseExpendHandle);
         // $('.colorpicker-value').unbind('change', this._colorToValueChangeHandle);
-        // this.node.removeEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
+        // this.node.removeEventListener('DOMCharacterDataModified', this._valueToColorChangeHandle);
         // this.node.removeEventListener('DOMCharacterDataModified', this._autoComplete);
-        // this.node.removeEventListener('dblclick', this._editorValueChangeHandle);
+        // this.node.removeEventListener('dblclick', this._editorValueChangedHandle);
 
         // expend collapse
         this.node.addEventListener('mousedown', this._collapseExpendHandle);
@@ -385,15 +421,15 @@ class EditJson {
         // color event      ?????????????????????????????????
         let colorpickeNodeArrs = this.node.querySelectorAll('.colorpicker-value').entries();
         for (let arr of colorpickeNodeArrs) {
-            arr[1].onchange = this._colorToValueChangeHandle;
+            arr[1].onchange = this._colorPickerChangedHandle;
         }
 
         // $('.colorpicker-value').on('change', this._colorToValueChangeHandle);
-        this.node.addEventListener('DOMCharacterDataModified', this.__valueToColorChangeHandle);
+        this.node.addEventListener('DOMCharacterDataModified', this._colorValueChangedHandle);
         this.node.addEventListener('DOMCharacterDataModified', this._autoComplete);
-        this.node.addEventListener('dblclick', this._editorValueChangeHandle);
-        this.node.addEventListener('dblclick', this._editorInsertHandle);
-        this.node.addEventListener('dblclick', this._editorDeleteHandle);
+        this.node.addEventListener('mousedown', this._editorValueChangedHandle);
+        this.node.addEventListener('mousedown', this._editorInsertHandle);
+        this.node.addEventListener('mouseup', this._editorDeleteHandle);
     }
 }
 
